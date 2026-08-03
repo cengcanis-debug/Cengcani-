@@ -28,28 +28,19 @@ function getAiClient(): GoogleGenAI {
   return aiClient;
 }
 
-const SIFISO_SYSTEM_INSTRUCTION = `You are "Sifiso", an encouraging, patient, and culturally relatable AI homework tutor and academic mentor designed specifically for South African school-going ch[...]
+const SIFISO_SYSTEM_INSTRUCTION = `You are "Sifiso", an encouraging, patient, and culturally relatable AI homework tutor and academic mentor designed specifically for South African school-going children. Be supportive and avoid simply giving answers.`;
 
-Your Core Rules:
-1. **Never Give Direct Answers**: If a student asks for the answer to a homework problem (e.g. "What is the answer to question 3?"), do NOT solve it for them. Instead, break the problem down into [...]
-2. **Socratic Guiding Method**: Guide them using hints, analogies, and scaffolded questions so they experience the "lightbulb moment" on their own. Relate math/science word problems to South Afric[...]
-3. **Warm & Relatable Tone**: Use accessible English, but incorporate familiar, light South African idioms or warmth ("Sharp sharp!", "Eish, fractions can be tricky, but we've got this!", "Let's u[...]
-4. **Multilingual & Language Proficiency Accommodation**: If the student's selected Home Language / Proficiency is NOT English (e.g., isiZulu, isiXhosa, Sesotho, Afrikaans, Setswana, Sepedi, etc.)[...]
-5. **Diagnose and Dissect**: When a student introduces a topic, check what they understand and where they feel stuck before giving further hints.
-6. **Encourage Self-Correction**: When they make a mistake, gently guide them without discouraging them. Praise effort and critical thinking.
-`;
-
-app.post("/api/chat", async (req, res) => {
+app.post("/api/chat", async (req: express.Request, res: express.Response) => {
   try {
     const { messages, grade, subject, language } = req.body;
     const ai = getAiClient();
 
-    const formattedContents = messages.map((m: any) => ({
+    const formattedContents = (messages || []).map((m: any) => ({
       role: m.role === 'user' ? 'user' : 'model',
       parts: [{ text: m.content }]
     }));
 
-    const contextInstruction = `${SIFISO_SYSTEM_INSTRUCTION}\nCurrent Student Context: Grade ${grade || '10'}, Subject: ${subject || 'Mathematics'}, Student Home Language / Support Preference: ${l[...]
+    const contextInstruction = `${SIFISO_SYSTEM_INSTRUCTION}\nCurrent Student Context: Grade ${grade || '10'}, Subject: ${subject || 'Mathematics'}, Student Home Language / Support Preference: ${language || 'English'}`;
 
     const response = await ai.models.generateContent({
       model: "gemini-3.6-flash",
@@ -60,17 +51,17 @@ app.post("/api/chat", async (req, res) => {
       }
     });
 
-    res.json({ text: response.text || "Eish, something went wrong. Let's try that again!" });
+    res.json({ text: (response as any).text || "Eish, something went wrong. Let's try that again!" });
   } catch (error: any) {
     console.error("Chat error:", error);
     if (error?.message?.includes('RESOURCE_EXHAUSTED') || error?.status === 429 || error?.message?.includes('quota')) {
-      return res.json({ text: "Eish! Our Sifiso AI tutoring server is currently experiencing high pilot testing traffic (API quota limit reached). Please give it a quick moment or try again in a f[...]
+      return res.json({ text: "Eish! Our Sifiso AI tutoring server is currently experiencing high pilot testing traffic (API quota limit reached). Please give it a quick moment or try again in a few minutes." });
     }
     res.status(500).json({ error: error.message || "Failed to generate tutor response" });
   }
 });
 
-app.post("/api/breakdown", async (req, res) => {
+app.post("/api/breakdown", async (req: express.Request, res: express.Response) => {
   try {
     const { question, grade, subject, image, language } = req.body;
     const ai = getAiClient();
@@ -88,33 +79,7 @@ app.post("/api/breakdown", async (req, res) => {
       }
     }
     parts.push({
-      text: `Analyze this South African homework question for Grade ${grade || '10'} ${subject || 'Mathematics'} (Preferred Home Language Support: ${language || 'English'}): "${question || 'Upload[...]
-      Do NOT give the final answer. Instead, break it down into 3 scaffolded milestones/steps using JSON format. If language is not English, include bilingual definitions/translations where helpfu[...]
-      Return JSON conforming to this structure:
-      {
-        "topic": "Topic name",
-        "encouragingIntro": "Warm greeting and relatable Sifiso encouragement",
-        "milestones": [
-          {
-            "step": 1,
-            "title": "Step 1 title",
-            "explanation": "Brief foundational explanation or analogy (with home language support if applicable)",
-            "guidingQuestion": "A Socratic question to prompt student thought"
-          },
-          {
-            "step": 2,
-            "title": "Step 2 title",
-            "explanation": "Explanation for step 2",
-            "guidingQuestion": "Guiding question for step 2"
-          },
-          {
-            "step": 3,
-            "title": "Step 3 title",
-            "explanation": "Explanation for step 3",
-            "guidingQuestion": "Guiding question for step 3"
-          }
-        ]
-      }`
+      text: `Analyze this South African homework question for Grade ${grade || '10'} ${subject || 'Mathematics'} (Preferred Home Language Support: ${language || 'English'}): "${question || 'Upload your question or image'}"\n\nDo NOT give the final answer. Instead, break it down into 3 scaffolded milestones/steps using JSON format. If language is not English, include bilingual definitions/translations where helpful.\n\nReturn JSON conforming to this structure:\n{\n  "topic": "Topic name",\n  "encouragingIntro": "Warm greeting and relatable Sifiso encouragement",\n  "milestones": [\n    { "step": 1, "title": "Step 1 title", "explanation": "Brief foundational explanation or analogy (with home language support if applicable)", "guidingQuestion": "A Socratic question to prompt student thought" },\n    { "step": 2, "title": "Step 2 title", "explanation": "Explanation for step 2", "guidingQuestion": "Guiding question for step 2" },\n    { "step": 3, "title": "Step 3 title", "explanation": "Explanation for step 3", "guidingQuestion": "Guiding question for step 3" }\n  ]\n}`
     });
 
     const response = await ai.models.generateContent({
@@ -147,7 +112,7 @@ app.post("/api/breakdown", async (req, res) => {
       }
     });
 
-    const json = JSON.parse(response.text || "{}");
+    const json = JSON.parse((response as any).text || "{}");
     res.json(json);
   } catch (error: any) {
     console.error("Breakdown error:", error);
@@ -156,8 +121,8 @@ app.post("/api/breakdown", async (req, res) => {
         topic: "Pilot Testing Traffic Limit",
         encouragingIntro: "Eish! Sifiso is receiving high pilot testing traffic right now. Here is a quick practice breakdown while quota refreshes!",
         milestones: [
-          { step: 1, title: "Step 1: Check your given values", explanation: "Identify what is known and what you need to calculate.", guidingQuestion: "What variables did the question give you?" [...]
-          { step: 2, title: "Step 2: Apply the correct formula", explanation: "Select the relevant theorem or formula from your formula sheet.", guidingQuestion: "Which CAPS/IEB formula applies h[...]
+          { step: 1, title: "Step 1: Check your given values", explanation: "Identify what is known and what you need to calculate.", guidingQuestion: "What variables did the question give you?" },
+          { step: 2, title: "Step 2: Apply the correct formula", explanation: "Select the relevant theorem or formula from your formula sheet.", guidingQuestion: "Which CAPS/IEB formula applies here?" },
           { step: 3, title: "Step 3: Calculate step-by-step", explanation: "Substitute your values carefully and double-check units.", guidingQuestion: "What is your final calculated value?" }
         ]
       });
@@ -166,27 +131,12 @@ app.post("/api/breakdown", async (req, res) => {
   }
 });
 
-app.post("/api/quiz", async (req, res) => {
+app.post("/api/quiz", async (req: express.Request, res: express.Response) => {
   try {
     const { topic, grade, subject, language } = req.body;
     const ai = getAiClient();
 
-    const prompt = `Create a 3-question Socratic mini-quiz for Grade ${grade || '10'} ${subject || 'Mathematics'} on the topic: "${topic}". Language support requested: ${language || 'English'}.
-    The questions should test conceptual understanding (CAPS/IEB aligned) with multiple-choice options, helpful Socratic hints (not answers), and explanations (including bilingual/home language t[...]
-    Return JSON format:
-    {
-      "quizTitle": "Title",
-      "questions": [
-        {
-          "id": 1,
-          "question": "...",
-          "options": ["A) ...", "B) ...", "C) ...", "D) ..."],
-          "correctIndex": 0,
-          "socraticHint": "Hint to guide student without revealing answer",
-          "explanation": "Explanation of the correct concept"
-        }
-      ]
-    }`;
+    const prompt = `Create a 3-question Socratic mini-quiz for Grade ${grade || '10'} ${subject || 'Mathematics'} on the topic: "${topic}". Language support requested: ${language || 'English'}.\n\nThe questions should test conceptual understanding (CAPS/IEB aligned) with multiple-choice options, helpful Socratic hints (not answers), and explanations (including bilingual/home language translation where helpful).\n\nReturn JSON format:\n{ "quizTitle": "Title", "questions": [ { "id": 1, "question": "...", "options": ["A) ...", "B) ...", "C) ...", "D) ..."], "correctIndex": 0, "socraticHint": "Hint to guide student without revealing answer", "explanation": "Explanation of the correct concept" } ] }`;
 
     const response = await ai.models.generateContent({
       model: "gemini-3.6-flash",
@@ -222,7 +172,7 @@ app.post("/api/quiz", async (req, res) => {
       }
     });
 
-    const json = JSON.parse(response.text || "{}");
+    const json = JSON.parse((response as any).text || "{}");
     res.json(json);
   } catch (error: any) {
     console.error("Quiz error:", error);
@@ -230,41 +180,19 @@ app.post("/api/quiz", async (req, res) => {
   }
 });
 
-app.post("/api/grade-quiz", async (req, res) => {
+app.post("/api/grade-quiz", async (req: express.Request, res: express.Response) => {
   try {
     const { topic, grade, subject, questions, userAnswers, language } = req.body;
     const ai = getAiClient();
 
-    const prompt = `Act as Sifiso, the encouraging South African tutor. The student (Language support: ${language || 'English'}) just completed a test quiz on "${topic}" for Grade ${grade} ${subj[...]
-Here are the questions and student's answers:
-${JSON.stringify(questions.map((q: any) => ({
-    question: q.question,
-    options: q.options,
-    correctAnswer: q.options[q.correctIndex],
-    studentAnswer: q.options[userAnswers[q.id]],
-    isCorrect: userAnswers[q.id] === q.correctIndex,
-    explanation: q.explanation
-})))}
-
-Provide a formal grading report card with:
-1. Overall score and percentage.
-2. Warm Sifiso encouraging remarks tailored to their performance ("Sharp sharp!" or gentle motivation if low score), including supportive code-switching in ${language || 'English'} if appropriate[...]
-3. Specific simplification tips, bilingual definitions, and foundational memory hooks for any concepts they got wrong or struggled with.
-4. Actionable next study steps.
-
-Return JSON format:
-{
-  "score": 2,
-  "total": 3,
-  "percentage": 67,
-  "sifisoFeedback": "Warm encouraging comment",
-  "simplificationTips": [
-    "Tip 1 regarding weak areas",
-    "Tip 2"
-  ],
-  "nextSteps": "Recommended practice"
-}
-`;
+    const prompt = `Act as Sifiso, the encouraging South African tutor. The student (Language support: ${language || 'English'}) just completed a test quiz on "${topic}" for Grade ${grade} ${subject || 'Mathematics'}.\n\nHere are the questions and student's answers:\n${JSON.stringify(questions.map((q: any) => ({
+      question: q.question,
+      options: q.options,
+      correctAnswer: q.options[q.correctIndex],
+      studentAnswer: q.options[userAnswers[q.id]],
+      isCorrect: userAnswers[q.id] === q.correctIndex,
+      explanation: q.explanation
+    })))}\n\nProvide a formal grading report card with:\n1. Overall score and percentage.\n2. Warm Sifiso encouraging remarks tailored to their performance ("Sharp sharp!" or gentle motivation if low score), including supportive code-switching in ${language || 'English'} if appropriate.\n3. Specific simplification tips, bilingual definitions, and foundational memory hooks for any concepts they got wrong or struggled with.\n4. Actionable next study steps.\n\nReturn JSON format:\n{ "score": 2, "total": 3, "percentage": 67, "sifisoFeedback": "Warm encouraging comment", "simplificationTips": ["Tip 1 regarding weak areas","Tip 2"], "nextSteps": "Recommended practice" }`;
 
     const response = await ai.models.generateContent({
       model: "gemini-3.6-flash",
@@ -290,7 +218,7 @@ Return JSON format:
       }
     });
 
-    const json = JSON.parse(response.text || "{}");
+    const json = JSON.parse((response as any).text || "{}");
     res.json(json);
   } catch (error: any) {
     console.error("Grade quiz error:", error);
@@ -298,24 +226,12 @@ Return JSON format:
   }
 });
 
-app.post("/api/flashcards", async (req, res) => {
+app.post("/api/flashcards", async (req: express.Request, res: express.Response) => {
   try {
     const { topic, grade, subject, language } = req.body;
     const ai = getAiClient();
 
-    const prompt = `Create 5 essential revision flashcards for Grade ${grade} ${subject} on the topic: "${topic || subject}". Student Language Support: ${language || 'English'}.
-Each flashcard should test a key CAPS/IEB term, formula, or principle with a clear, simplified definition (including home language / bilingual term support if language != English).
-Return JSON format:
-{
-  "flashcards": [
-    {
-      "id": "1",
-      "term": "Term or Formula",
-      "definition": "Simplified definition with memory hook or bilingual home language translation"
-    }
-  ]
-}
-`;
+    const prompt = `Create 5 essential revision flashcards for Grade ${grade} ${subject || 'Mathematics'} on the topic: "${topic || subject}". Student Language Support: ${language || 'English'}.\n\nEach flashcard should test a key CAPS/IEB term, formula, or principle with a clear, simplified definition (including home language / bilingual term support if language != English).\n\nReturn JSON format:\n{ "flashcards": [ { "id": "1", "term": "Term or Formula", "definition": "Simplified definition with memory hook or bilingual home language translation" } ] }`;
 
     const response = await ai.models.generateContent({
       model: "gemini-3.6-flash",
@@ -344,7 +260,7 @@ Return JSON format:
       }
     });
 
-    const json = JSON.parse(response.text || "{}");
+    const json = JSON.parse((response as any).text || "{}");
     res.json(json);
   } catch (error: any) {
     console.error("Flashcards error:", error);
@@ -353,9 +269,9 @@ Return JSON format:
 });
 
 // Secure Unique Android App Purchase & Cellphone Delivery Store
-const androidPurchases = new Map<string, { token: string; phone: string; name: string; parentName: string; parentPhone: string; grade: string; paymentMethod: string; paidAt: string; downloadUrl: [...]
+const androidPurchases = new Map<string, any>();
 
-app.post("/api/android/purchase", (req, res) => {
+app.post("/api/android/purchase", (req: express.Request, res: express.Response) => {
   try {
     const { phone, studentName, parentName, parentPhone, grade, paymentMethod } = req.body;
     if (!phone || phone.trim().length < 9) {
@@ -403,8 +319,8 @@ app.post("/api/android/purchase", (req, res) => {
   }
 });
 
-app.get("/download-secure-apk/:token", (req, res) => {
-  const { token } = req.params;
+app.get("/download-secure-apk/:token", (req: express.Request, res: express.Response) => {
+  const { token } = req.params as { token: string };
   const purchase = androidPurchases.get(token);
 
   if (!purchase) {
@@ -427,13 +343,13 @@ app.get("/download-secure-apk/:token", (req, res) => {
         <title>Download Sifiso Secure Android App</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
-          body { font-family: system-ui, -apple-system, sans-serif; background: #f0fdf4; color: #064e3b; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min[...]
+          body { font-family: system-ui, -apple-system, sans-serif; background: #f0fdf4; color: #064e3b; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
           .card { background: white; max-width: 480px; width: 100%; padding: 32px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); text-align: center; border: 1px solid #d1fae5; }
           h1 { color: #047857; font-size: 24px; margin-bottom: 8px; }
           p { color: #475569; font-size: 14px; line-height: 1.6; }
-          .btn { display: inline-block; background: #059669; color: white; padding: 14px 28px; border-radius: 12px; text-decoration: none; font-weight: bold; margin-top: 20px; box-shadow: 0 4px 1[...]
+          .btn { display: inline-block; background: #059669; color: white; padding: 14px 28px; border-radius: 12px; text-decoration: none; font-weight: bold; margin-top: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
           .badge { background: #d1fae5; color: #065f46; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; margin-bottom: 16px; }
-        .meta { background: #f8fafc; padding: 12px; border-radius: 10px; margin-top: 20px; font-size: 13px; color: #64748b; text-align: left; }
+          .meta { background: #f8fafc; padding: 12px; border-radius: 10px; margin-top: 20px; font-size: 13px; color: #64748b; text-align: left; }
         </style>
       </head>
       <body>
@@ -463,7 +379,7 @@ async function startServer() {
   } else {
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
-    app.get('*all', (req, res) => {
+    app.get('*all', (req: express.Request, res: express.Response) => {
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }
