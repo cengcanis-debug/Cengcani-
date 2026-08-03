@@ -1,0 +1,16 @@
+{
+  "appName": "Sifiso AI Tutor",
+  "version": "2.5.0",
+  "architecture": "Full-Stack Express + React Vite",
+  "curriculum": "South African CAPS & IEB (Grades 5-12)",
+  "security": "Server-side Gemini API proxy, isolated environment variables",
+  "modulesCount": 21,
+  "status": "Verified & Stress Tested",
+  "lastVerified": "2026-08-01",
+  "recoveryProtocols": [
+    "ErrorBoundary Isolation",
+    "LocalStorage Fallback & Sanitization",
+    "Server-side AI Proxy with Timeout Handlers",
+    "Automated QSME System Health Checks"
+  ]
+}

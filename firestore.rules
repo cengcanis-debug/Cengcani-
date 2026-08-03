@@ -1,0 +1,85 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // User Profile Validation
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email', 'displayName']) &&
+             data.keys().size() <= 10 &&
+             data.uid is string && data.uid.size() <= 128 &&
+             data.email is string && data.email.size() <= 256 &&
+             data.displayName is string && data.displayName.size() <= 100 &&
+             (!data.keys().hasAny(['grade']) || (data.grade is string && data.grade.size() <= 20)) &&
+             (!data.keys().hasAny(['school']) || (data.school is string && data.school.size() <= 100));
+    }
+
+    match /users/{userId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && isValidId(userId) && userId == request.auth.uid && isValidUser(incoming()) && incoming().uid == request.auth.uid && incoming().email == request.auth.token.email;
+      allow update: if isSignedIn() && isValidId(userId) && userId == request.auth.uid && isValidUser(incoming()) && incoming().uid == existing().uid && incoming().email == existing().email;
+      allow delete: if isSignedIn() && userId == request.auth.uid;
+    }
+
+    // Support Ticket Validation
+    function isValidSupportTicket(data) {
+      return data.keys().hasAll(['id', 'userId', 'subject', 'message', 'status']) &&
+             data.keys().size() <= 10 &&
+             data.id is string && data.id.size() <= 128 &&
+             data.userId is string && data.userId.size() <= 128 &&
+             data.subject is string && data.subject.size() <= 200 &&
+             data.message is string && data.message.size() <= 2000 &&
+             data.status is string && (data.status == 'open' || data.status == 'resolved') &&
+             (!data.keys().hasAny(['userName']) || (data.userName is string && data.userName.size() <= 100)) &&
+             (!data.keys().hasAny(['email']) || (data.email is string && data.email.size() <= 256));
+    }
+
+    match /supportTickets/{ticketId} {
+      allow get: if isSignedIn() && (resource.data.userId == request.auth.uid);
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid);
+      allow create: if isSignedIn() && isValidId(ticketId) && isValidSupportTicket(incoming()) && incoming().userId == request.auth.uid;
+      allow update: if isSignedIn() && isValidId(ticketId) && isValidSupportTicket(incoming()) && incoming().userId == existing().userId && incoming().diff(existing()).affectedKeys().hasOnly(['status']);
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // Study Group Validation
+    function isValidStudyGroup(data) {
+      return data.keys().hasAll(['id', 'groupName', 'subject', 'creatorId']) &&
+             data.keys().size() <= 8 &&
+             data.id is string && data.id.size() <= 128 &&
+             data.groupName is string && data.groupName.size() <= 100 &&
+             data.subject is string && data.subject.size() <= 100 &&
+             data.creatorId is string && data.creatorId.size() <= 128 &&
+             (!data.keys().hasAny(['gradeLevel']) || (data.gradeLevel is string && data.gradeLevel.size() <= 20));
+    }
+
+    match /studyGroups/{groupId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && isValidId(groupId) && isValidStudyGroup(incoming()) && incoming().creatorId == request.auth.uid;
+      allow update: if isSignedIn() && isValidId(groupId) && isValidStudyGroup(incoming()) && incoming().creatorId == existing().creatorId;
+      allow delete: if isSignedIn() && resource.data.uid == request.auth.uid || resource.data.creatorId == request.auth.uid;
+    }
+  }
+}
