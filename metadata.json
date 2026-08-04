@@ -1,6 +1,6 @@
 {
   "name": "Sifiso - SA AI Homework Tutor",
   "description": "An encouraging, patient, and culturally relatable AI homework tutor and academic mentor for South African students (Grades R to 12) following CAPS and IEB curricula.",
-  "requestFramePermissions": [],
+  "requestFramePermissions": ["microphone"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

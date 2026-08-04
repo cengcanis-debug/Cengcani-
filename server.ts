@@ -287,6 +287,63 @@ app.post("/api/quiz", aiLimiter, async (req, res) => {
     res.json(json);
   } catch (error: any) {
     console.error("Quiz error:", error);
+    if (error?.message?.includes('RESOURCE_EXHAUSTED') || error?.status === 429 || error?.message?.includes('quota')) {
+      const isGeometry = req.body.topic?.toLowerCase().includes('geometry') || req.body.topic?.toLowerCase().includes('circle');
+      return res.json({
+        quizTitle: isGeometry ? "Euclidean & Circle Geometry Offline Practice Quiz" : "Sifiso Offline Practice Quiz (Quota Refreshing)",
+        questions: isGeometry ? [
+          {
+            id: 1,
+            question: "The angle subtended by an arc at the centre of a circle is...",
+            options: ["A) Equal to the angle at the circumference", "B) Twice the angle at the circumference subtended by the same arc", "C) Half the angle at the circumference", "D) Supplementary to the angle at the circumference"],
+            correctIndex: 1,
+            socraticHint: "Think about the relationship between the angle at the centre and the angle at the circumference from the same arc chord.",
+            explanation: "Theorem: The angle subtended by an arc at the centre of a circle is double the size of the angle subtended by the same arc at the circle's circumference."
+          },
+          {
+            id: 2,
+            question: "Opposite angles of a cyclic quadrilateral are...",
+            options: ["A) Equal", "B) Complementary (add up to 90°)", "C) Supplementary (add up to 180°)", "D) Unrelated"],
+            correctIndex: 2,
+            socraticHint: "Remember what happens when all four vertices of a quadrilateral touch the circumference of a circle.",
+            explanation: "Theorem: The opposite angles of a cyclic quadrilateral are supplementary (their sum is 180°)."
+          },
+          {
+            id: 3,
+            question: "The angle between a tangent to a circle and a chord drawn from the point of contact is equal to...",
+            options: ["A) The angle in the alternate segment", "B) 90 degrees", "C) Twice the radius", "D) The angle at the centre"],
+            correctIndex: 0,
+            socraticHint: "This is known as the Tan-Chord Theorem (or alternate segment theorem). Look across into the alternate segment.",
+            explanation: "Theorem: The angle between a tangent and a chord is equal to the angle subtended by the chord in the alternate segment."
+          }
+        ] : [
+          {
+            id: 1,
+            question: "What is the primary method for solving quadratic equations when factorisation is difficult?",
+            options: ["A) Guess and check", "B) Quadratic Formula: x = (-b ± √(b² - 4ac)) / (2a)", "C) Finding the gradient", "D) Pythagoras theorem"],
+            correctIndex: 1,
+            socraticHint: "Recall the formula that uses coefficients a, b, and c.",
+            explanation: "The quadratic formula can be used to solve any quadratic equation in standard form."
+          },
+          {
+            id: 2,
+            question: "What does the discriminant (Δ = b² - 4ac) indicate when Δ > 0 and is a perfect square?",
+            options: ["A) Real, unequal, and rational roots", "B) Non-real roots", "C) Real and equal roots", "D) Undefined roots"],
+            correctIndex: 0,
+            socraticHint: "When delta is positive and a square number, roots are real and rational.",
+            explanation: "If Δ > 0 and a perfect square, the roots are real, rational, and unequal."
+          },
+          {
+            id: 3,
+            question: "In compound growth, money grows...",
+            options: ["A) Linearly by a fixed rand amount each year", "B) Exponentially, earning interest on previously earned interest", "C) Logarithmically", "D) Randomly"],
+            correctIndex: 1,
+            socraticHint: "Compound interest means interest on interest.",
+            explanation: "Compound growth follows exponential curves because interest is calculated on the accumulated total."
+          }
+        ]
+      });
+    }
     res.status(500).json({ error: error.message || "Failed to generate quiz" });
   }
 });

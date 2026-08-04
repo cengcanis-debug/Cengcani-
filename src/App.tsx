@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MessageSquare, Puzzle, Award, Compass, Sparkles, GraduationCap, BookOpen, Layers, Calendar, Calculator, BookMarked, Users, HeartPulse, Briefcase, ChevronDown, ShieldCheck, Scale, Smartphone, Megaphone, Zap } from 'lucide-react';
+import { MessageSquare, Puzzle, Award, Compass, Sparkles, GraduationCap, BookOpen, Layers, Calendar, Calculator, BookMarked, Users, HeartPulse, Briefcase, ChevronDown, ShieldCheck, Scale, Smartphone, Megaphone, Zap, WifiOff } from 'lucide-react';
 import { ActiveTab, Message } from './types';
 import { ChatView } from './components/ChatView';
 import { BreakdownView } from './components/BreakdownView';
@@ -21,9 +21,11 @@ import { StudentDiaryView } from './components/StudentDiaryView';
 import { SchoolNoticeBoardView } from './components/SchoolNoticeBoardView';
 import { PerformanceRiskView } from './components/PerformanceRiskView';
 import { TestingHubView } from './components/TestingHubView';
+import { DeveloperObservationHub } from './components/DeveloperObservationHub';
 import { SifisoGuardianModal } from './components/SifisoGuardianModal';
 import { LegalIpModal } from './components/LegalIpModal';
 import { WhatsAppOnboardingModal } from './components/WhatsAppOnboardingModal';
+import { RecoveryModeModal } from './components/RecoveryModeModal';
 import { FirebaseAuthButton } from './components/FirebaseAuthButton';
 
 
@@ -63,6 +65,8 @@ export default function App() {
   const [isGuardianOpen, setIsGuardianOpen] = useState<boolean>(false);
   const [isLegalOpen, setIsLegalOpen] = useState<boolean>(false);
   const [isWhatsAppModalOpen, setIsWhatsAppModalOpen] = useState<boolean>(false);
+  const [isServerUnreachable, setIsServerUnreachable] = useState<boolean>(false);
+  const [isRecoveryModalOpen, setIsRecoveryModalOpen] = useState<boolean>(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'model',
@@ -70,6 +74,20 @@ export default function App() {
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
   ]);
+
+  const handleRetryConnection = async (): Promise<boolean> => {
+    try {
+      const res = await fetch('/api/health');
+      if (res.ok) {
+        setIsServerUnreachable(false);
+        return true;
+      }
+      return false;
+    } catch (err) {
+      setIsServerUnreachable(true);
+      return false;
+    }
+  };
 
   const handleAskTutor = async (promptText: string) => {
     setActiveTab('chat');
@@ -95,6 +113,7 @@ export default function App() {
       const data = await res.json();
       if (data.error) throw new Error(data.error);
 
+      setIsServerUnreachable(false);
       const modelMessage: Message = {
         role: 'model',
         content: data.text,
@@ -102,9 +121,11 @@ export default function App() {
       };
       setMessages([...newMessages, modelMessage]);
     } catch (err: any) {
+      setIsServerUnreachable(true);
+      setIsRecoveryModalOpen(true);
       const errorMsg: Message = {
         role: 'model',
-        content: "Eish! Something went wrong connecting to Sifiso. Please check your connection and try again.",
+        content: "Eish! Something went wrong connecting to Sifiso. Recovery Mode activated: You can view cached chat messages or retry your connection.",
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
       setMessages([...newMessages, errorMsg]);
@@ -188,6 +209,19 @@ export default function App() {
             </button>
 
             <FirebaseAuthButton />
+
+            <button
+              onClick={() => setIsRecoveryModalOpen(true)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-xs cursor-pointer ${
+                isServerUnreachable
+                  ? 'bg-amber-600 hover:bg-amber-700 text-white animate-bounce'
+                  : 'bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200'
+              }`}
+              title="Open Recovery & Offline Cache Hub"
+            >
+              <WifiOff className="w-4 h-4" />
+              <span>{isServerUnreachable ? '⚠️ Offline / Recovery' : 'Recovery Hub'}</span>
+            </button>
 
             <button
               onClick={() => setIsGuardianOpen(true)}
@@ -484,6 +518,18 @@ export default function App() {
             <ShieldCheck className="w-4 h-4" />
             <span>🛡️ Testing Hub & Terms</span>
           </button>
+
+          <button
+            onClick={() => setActiveTab('dev-hub')}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition whitespace-nowrap cursor-pointer ${
+              activeTab === 'dev-hub'
+                ? 'bg-indigo-900 text-white shadow-xs'
+                : 'text-indigo-900 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200'
+            }`}
+          >
+            <Sparkles className="w-4 h-4" />
+            <span>🔒 Developer Observation Hub</span>
+          </button>
         </div>
       </div>
 
@@ -549,6 +595,9 @@ export default function App() {
         {activeTab === 'testing-hub' && (
           <TestingHubView />
         )}
+        {activeTab === 'dev-hub' && (
+          <DeveloperObservationHub />
+        )}
       </main>
 
       {/* Footer */}
@@ -576,6 +625,13 @@ export default function App() {
       <SifisoGuardianModal isOpen={isGuardianOpen} onClose={() => setIsGuardianOpen(false)} />
       <LegalIpModal isOpen={isLegalOpen} onClose={() => setIsLegalOpen(false)} />
       <WhatsAppOnboardingModal isOpen={isWhatsAppModalOpen} onClose={() => setIsWhatsAppModalOpen(false)} />
+      <RecoveryModeModal
+        isOpen={isRecoveryModalOpen}
+        onClose={() => setIsRecoveryModalOpen(false)}
+        isServerUnreachable={isServerUnreachable}
+        onRetryConnection={handleRetryConnection}
+        cachedMessages={messages}
+      />
     </div>
   );
 }

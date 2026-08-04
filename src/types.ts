@@ -47,5 +47,19 @@ export interface FlashcardItem {
   subject: string;
 }
 
-export type ActiveTab = 'chat' | 'breakdown' | 'quiz' | 'flashcards' | 'formulas' | 'planner' | 'library' | 'groups' | 'exam' | 'support' | 'career' | 'motivation' | 'android-app' | 'teacher' | 'sponsor' | 'qsmes' | 'diary' | 'noticeboard' | 'perf-risk' | 'testing-hub';
+export interface FeedbackItem {
+  id: string;
+  testerName: string;
+  testerRole: 'Student' | 'Parent' | 'Teacher' | 'School Principal' | 'Tester';
+  category: 'Bug Report' | 'Feature Suggestion' | 'WhatsApp / Link Query' | 'Curriculum Question' | 'General Feedback';
+  message: string;
+  rating: number; // 1 to 5
+  timestamp: string;
+  status: 'Pending' | 'In Progress' | 'Resolved';
+  developerReply?: string;
+  repliedAt?: string;
+}
+
+export type ActiveTab = 'chat' | 'breakdown' | 'quiz' | 'flashcards' | 'formulas' | 'planner' | 'library' | 'groups' | 'exam' | 'support' | 'career' | 'motivation' | 'android-app' | 'teacher' | 'sponsor' | 'qsmes' | 'diary' | 'noticeboard' | 'perf-risk' | 'testing-hub' | 'dev-hub';
+
 

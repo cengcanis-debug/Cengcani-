@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Sparkles, User, Bot, Loader2, HelpCircle, BookOpen } from 'lucide-react';
+import { Send, Sparkles, User, Bot, Loader2, HelpCircle, BookOpen, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { Message } from '../types';
 
@@ -22,6 +22,8 @@ const STARTER_PROMPTS = [
 export function ChatView({ messages, setMessages, grade, subject, language }: ChatViewProps) {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [speakingIndex, setSpeakingIndex] = useState<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -31,6 +33,98 @@ export function ChatView({ messages, setMessages, grade, subject, language }: Ch
   useEffect(() => {
     scrollToBottom();
   }, [messages, loading]);
+
+  useEffect(() => {
+    // Stop speech when component unmounts or language changes
+    return () => {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
+  const handleSpeak = (text: string, index: number) => {
+    if (!('speechSynthesis' in window)) {
+      alert("Text-to-speech is not supported in your browser.");
+      return;
+    }
+
+    if (speakingIndex === index) {
+      window.speechSynthesis.cancel();
+      setSpeakingIndex(null);
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+    
+    // Clean markdown symbols for clearer speech synthesis
+    const cleanText = text
+      .replace(/[#*`_~[\]()]/g, '')
+      .replace(/->/g, ' yields ')
+      .replace(/H2O/g, 'H O')
+      .replace(/CO2/g, 'C O 2');
+
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.lang = language === 'Afrikaans' ? 'af-ZA' : language === 'isiZulu' ? 'zu-ZA' : language === 'Setswana' ? 'tn-ZA' : 'en-ZA';
+    utterance.rate = 0.95;
+
+    utterance.onend = () => {
+      setSpeakingIndex(null);
+    };
+
+    utterance.onerror = () => {
+      setSpeakingIndex(null);
+    };
+
+    setSpeakingIndex(index);
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const toggleListening = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Voice-to-text is not supported in this browser. Please use Chrome, Edge, or Safari.");
+      return;
+    }
+
+    if (isListening) {
+      setIsListening(false);
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.lang = language === 'Afrikaans' ? 'af-ZA' : language === 'isiZulu' ? 'zu-ZA' : language === 'Setswana' ? 'tn-ZA' : 'en-ZA';
+      recognition.interimResults = true;
+      recognition.maxAlternatives = 1;
+
+      recognition.onstart = () => {
+        setIsListening(true);
+      };
+
+      recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        setInput(transcript);
+      };
+
+      recognition.onerror = (event: any) => {
+        console.error('Speech recognition error', event.error);
+        setIsListening(false);
+        if (event.error === 'not-allowed') {
+          alert("Microphone access was denied or is not permitted in this frame. Please check browser microphone permissions.");
+        }
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognition.start();
+    } catch (e) {
+      console.error(e);
+      setIsListening(false);
+    }
+  };
 
   const handleSend = async (textToSend?: string) => {
     const text = textToSend || input;
@@ -151,17 +245,40 @@ export function ChatView({ messages, setMessages, grade, subject, language }: Ch
                 {msg.role === 'user' ? (
                   <p className="whitespace-pre-wrap">{msg.content}</p>
                 ) : (
-                  <div className="markdown-body prose prose-sm max-w-none text-slate-800">
-                    <ReactMarkdown>{msg.content}</ReactMarkdown>
+                  <div>
+                    <div className="markdown-body prose prose-sm max-w-none text-slate-800">
+                      <ReactMarkdown>{msg.content}</ReactMarkdown>
+                    </div>
+                    <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between">
+                      <button
+                        onClick={() => handleSpeak(msg.content, index)}
+                        className={`text-xs font-semibold px-3 py-1.5 rounded-xl border transition flex items-center gap-1.5 cursor-pointer ${
+                          speakingIndex === index
+                            ? 'bg-red-600 text-white border-red-700 animate-pulse'
+                            : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-200'
+                        }`}
+                      >
+                        {speakingIndex === index ? (
+                          <>
+                            <VolumeX className="w-3.5 h-3.5" />
+                            <span>Stop Audio</span>
+                          </>
+                        ) : (
+                          <>
+                            <Volume2 className="w-3.5 h-3.5" />
+                            <span>🔊 Listen to Sifiso</span>
+                          </>
+                        )}
+                      </button>
+                      <span className="text-[10px] text-slate-400">{msg.timestamp}</span>
+                    </div>
                   </div>
                 )}
-                <div
-                  className={`text-[10px] mt-1.5 text-right ${
-                    msg.role === 'user' ? 'text-amber-200' : 'text-slate-400'
-                  }`}
-                >
-                  {msg.timestamp}
-                </div>
+                {msg.role === 'user' && (
+                  <div className="text-[10px] mt-1.5 text-right text-amber-200">
+                    {msg.timestamp}
+                  </div>
+                )}
               </div>
             </div>
           ))
@@ -183,6 +300,20 @@ export function ChatView({ messages, setMessages, grade, subject, language }: Ch
 
       {/* Input area */}
       <div className="p-4 bg-white border-t border-slate-200">
+        {isListening && (
+          <div className="mb-2 px-3 py-1.5 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700 flex items-center justify-between animate-pulse">
+            <span className="flex items-center gap-2 font-medium">
+              <span className="w-2 h-2 rounded-full bg-red-600 animate-ping"></span>
+              Listening to your voice... Speak your question clearly.
+            </span>
+            <button
+              onClick={toggleListening}
+              className="text-xs font-semibold underline hover:text-red-900"
+            >
+              Stop
+            </button>
+          </div>
+        )}
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -194,20 +325,32 @@ export function ChatView({ messages, setMessages, grade, subject, language }: Ch
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder={`Ask Sifiso anything about Grade ${grade} ${subject} (remember, no direct answers!)...`}
+            placeholder={`Ask Sifiso anything about Grade ${grade} ${subject} (or use mic to speak)...`}
             className="flex-1 bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition"
           />
           <button
+            type="button"
+            onClick={toggleListening}
+            className={`p-3 rounded-xl border transition flex items-center justify-center shrink-0 ${
+              isListening
+                ? 'bg-red-600 text-white border-red-700 animate-bounce shadow-md'
+                : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300'
+            }`}
+            title={isListening ? 'Stop listening' : 'Speak your question (Voice-to-Text)'}
+          >
+            {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+          </button>
+          <button
             type="submit"
             disabled={!input.trim() || loading}
-            className="bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 text-white px-5 py-3 rounded-xl font-medium text-sm flex items-center gap-2 transition shadow-sm cursor-pointer"
+            className="bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 text-white px-5 py-3 rounded-xl font-medium text-sm flex items-center gap-2 transition shadow-sm cursor-pointer shrink-0"
           >
             <span>Ask</span>
             <Send className="w-4 h-4" />
           </button>
         </form>
         <div className="flex items-center justify-between mt-2 text-[11px] text-slate-500 px-1">
-          <span>💡 Tip: Ask Sifiso to break down a tricky word problem or give you a hint.</span>
+          <span>💡 Tip: Click the microphone icon to speak your homework question out loud.</span>
           <span>CAPS & IEB Aligned</span>
         </div>
       </div>

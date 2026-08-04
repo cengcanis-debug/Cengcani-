@@ -9,7 +9,7 @@ interface QuizViewProps {
 }
 
 const COMMON_TOPICS: Record<string, string[]> = {
-  Mathematics: ["Quadratic Equations & Inequalities", "Euclidean Geometry", "Trigonometry & Identities", "Financial Mathematics"],
+  Mathematics: ["Euclidean & Circle Geometry Proofs", "Circle Geometry Theorems", "Quadratic Equations & Inequalities", "Trigonometry & Identities", "Financial Mathematics"],
   "Physical Sciences": ["Newton's Laws of Motion", "Chemical Bonding & Molecular Structure", "Momentum & Impulse", "Work, Energy & Power"],
   "Life Sciences": ["Photosynthesis & Cellular Respiration", "DNA Code to Protein Synthesis", "Meiosis & Genetics", "Human Nervous System"],
   "Natural Sciences": ["Photosynthesis & Ecosystems", "Matter & Materials", "Energy & Change", "Planet Earth & Beyond"],

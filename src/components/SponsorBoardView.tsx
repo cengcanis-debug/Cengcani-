@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Award, Briefcase, DollarSign, Megaphone, CheckCircle2, ShieldCheck, Heart, Sparkles, Building, Globe, Send } from 'lucide-react';
 
 export function SponsorBoardView() {
-  const [activeTabSub, setActiveTabSub] = useState<'sponsors' | 'pricing-analysis' | 'advertise' | 'school-tiers'>('school-tiers');
+  const [activeTabSub, setActiveTabSub] = useState<'sponsors' | 'advertise' | 'school-tiers'>('school-tiers');
   
   // Ad application form state
   const [companyName, setCompanyName] = useState('');
@@ -42,7 +42,7 @@ export function SponsorBoardView() {
           </div>
           <h1 className="text-3xl font-extrabold tracking-tight">Partnerships, Sponsorships & School Tiers</h1>
           <p className="text-slate-300 text-sm max-w-2xl leading-relaxed">
-            Empowering South African students from Grade 5 to Grade 12 through transparent school tiers, paying models, sponsored access, and fee-waiver exchanges.
+            Empowering South African students from Grade 5 to Grade 12 through transparent school tiers, paying models, sponsored access, and institutional deployments.
           </p>
 
           <div className="flex gap-2 pt-2 flex-wrap">
@@ -53,14 +53,6 @@ export function SponsorBoardView() {
               }`}
             >
               <Building size={15} /> School Tiers & Registration
-            </button>
-            <button
-              onClick={() => setActiveTabSub('pricing-analysis')}
-              className={`px-4 py-2 rounded-xl font-semibold text-xs transition cursor-pointer flex items-center gap-1.5 ${
-                activeTabSub === 'pricing-analysis' ? 'bg-indigo-600 text-white shadow' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-              }`}
-            >
-              <DollarSign size={15} /> Pricing Model Analysis
             </button>
             <button
               onClick={() => setActiveTabSub('sponsors')}
@@ -82,7 +74,7 @@ export function SponsorBoardView() {
         </div>
       </div>
 
-      {/* 0. SCHOOL TIERS & REGISTRATION (NEW) */}
+      {/* 0. SCHOOL TIERS & REGISTRATION */}
       {activeTabSub === 'school-tiers' && (
         <div className="space-y-8">
           <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
@@ -243,82 +235,7 @@ export function SponsorBoardView() {
         </div>
       )}
 
-      {/* 1. PRICING MODEL ANALYSIS SECTION */}
-      {activeTabSub === 'pricing-analysis' && (
-        <div className="space-y-6">
-          <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
-            <div className="border-b border-slate-100 pb-4">
-              <span className="text-xs font-bold text-indigo-600 uppercase tracking-widest">Developer Strategic Assessment</span>
-              <h2 className="text-2xl font-bold text-slate-900 mt-1">Which Model is More Viable & Profitable?</h2>
-              <p className="text-sm text-slate-500">Comparison: Once-Off Yearly Cost per Student vs. Multi-Year Phase Pricing (Grade 5–7 vs. Grade 8–12)</p>
-            </div>
 
-            {/* Direct Recommendation Card */}
-            <div className="bg-emerald-50 border-2 border-emerald-500/30 p-6 rounded-2xl space-y-3">
-              <div className="flex items-center gap-2.5 text-emerald-900 font-extrabold text-base">
-                <Sparkles size={20} className="text-emerald-600" />
-                <span>Executive Recommendation: The Hybrid (Once-Off Annual + Phase Discount) Model</span>
-              </div>
-              <p className="text-xs sm:text-sm text-emerald-800 leading-relaxed">
-                For the South African school ecosystem (Grade 5 to Grade 12), a <strong>Once-Off Annual Subscription per Student (e.g., R99 - R149/year)</strong> combined with a <strong>Multi-Year Phase Bundle (e.g., Grade 5-7 or Grade 8-12 pass)</strong> yields the highest long-term retention and developer profitability.
-              </p>
-            </div>
-
-            {/* Detailed Comparison Grid */}
-            <div className="grid md:grid-cols-2 gap-6">
-              {/* Option A */}
-              <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-bold text-lg text-slate-900">Model A: Once-Off Yearly Cost</h3>
-                  <span className="bg-indigo-100 text-indigo-800 text-xs font-bold px-2.5 py-1 rounded-full">R99 - R149 / year</span>
-                </div>
-                <ul className="space-y-2 text-xs sm:text-sm text-slate-700">
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 size={16} className="text-emerald-600 shrink-0 mt-0.5" />
-                    <span><strong>Low Barrier to Entry:</strong> Parents and schools find R99/year extremely affordable for full CAPS/IEB AI tutoring.</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 size={16} className="text-emerald-600 shrink-0 mt-0.5" />
-                    <span><strong>Predictable Annual Revenue:</strong> Aligns perfectly with the 4 school terms and annual school fee budgeting cycles.</span>
-                  </li>
-                  <li className="flex items-start gap-2 text-amber-800">
-                    <span className="font-bold shrink-0">⚠️ Consideration:</span> Requires annual re-marketing and retention efforts at the start of each academic year.
-                  </li>
-                </ul>
-              </div>
-
-              {/* Option B */}
-              <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-bold text-lg text-slate-900">Model B: Phase Package (Grade 5-7 / 8-12)</h3>
-                  <span className="bg-indigo-100 text-indigo-800 text-xs font-bold px-2.5 py-1 rounded-full">R299 - R499 / 3-5 years</span>
-                </div>
-                <ul className="space-y-2 text-xs sm:text-sm text-slate-700">
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 size={16} className="text-emerald-600 shrink-0 mt-0.5" />
-                    <span><strong>Upfront Cash Flow:</strong> Secures larger upfront capital per student for server and maintenance costs.</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 size={16} className="text-emerald-600 shrink-0 mt-0.5" />
-                    <span><span><strong>High Value Perception:</strong> Parents appreciate paying once for the entire Intermediate (Gr 5-7) or FET (Gr 10-12) phase.</span></span>
-                  </li>
-                  <li className="flex items-start gap-2 text-amber-800">
-                    <span className="font-bold shrink-0">⚠️ Consideration:</span> Grade transitions (e.g. moving from Gr 7 to Gr 8) require clear structural tiering.
-                  </li>
-                </ul>
-              </div>
-            </div>
-
-            {/* Developer Takeaway */}
-            <div className="bg-indigo-50/60 p-6 rounded-2xl border border-indigo-200 space-y-2">
-              <h4 className="font-bold text-sm text-indigo-900">Conclusion for Developer Profitability</h4>
-              <p className="text-xs sm:text-sm text-indigo-800 leading-relaxed">
-                Offer both: <strong>R99/year standard subscription</strong> for budget-constrained households, and a <strong>R349 Multi-Year Phase Pass (Gr 5-7 or Gr 8-12)</strong> for schools and parents wanting uninterrupted continuity. Supplement this with the <strong>Advertiser Space</strong> below to subsidize server costs down to near-zero.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* 2. SPONSOR ACKNOWLEDGEMENT BOARD */}
       {activeTabSub === 'sponsors' && (
