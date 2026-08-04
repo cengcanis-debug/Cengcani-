@@ -1,3 +1,12 @@
 {
-  "note": "This file was removed from the public repository for security reasons. Create a local copy from firebase-applet-config.example or set firebase config values via environment variables. DO NOT commit real API keys."
+  "projectId": "tidal-run-503118-k2",
+  "appId": "1:941281221208:web:d54d7f3038014d443c082d",
+  "apiKey": "AIzaSyCOSqcuAVaJyzut1bSa65bV25An5UrkrDE",
+  "authDomain": "tidal-run-503118-k2.firebaseapp.com",
+  "firestoreDatabaseId": "ai-studio-sifisoyoursaaitu-1174c074-9723-4230-9c82-5ce56ae73fc2",
+  "storageBucket": "tidal-run-503118-k2.firebasestorage.app",
+  "messagingSenderId": "941281221208",
+  "measurementId": "",
+  "oAuthClientId": "941281221208-8tpuqpk2dvprehdvqrusck2l3bg6e067.apps.googleusercontent.com",
+  "recaptchaSiteKey": ""
 }

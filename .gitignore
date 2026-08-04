@@ -1,9 +1,8 @@
-.env*
-!.env.example
 node_modules/
 build/
 dist/
 coverage/
 .DS_Store
 *.log
-firebase-applet-config.json
+.env*
+!.env.example
