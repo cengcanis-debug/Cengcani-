@@ -22,9 +22,10 @@ export function WhatsAppOnboardingModal({ isOpen, onClose }: WhatsAppOnboardingM
   const encodedSchool = encodeURIComponent(schoolName);
   const encodedGrade = encodeURIComponent(gradeLevel);
   const encodedRecipient = encodeURIComponent(recipientName);
+  const uniqueInviteId = `sf-inv-${Math.random().toString(36).substring(2, 8)}-${Date.now().toString(36)}`;
   
-  // Unique invite URL with UTM parameters for Google & WhatsApp link handlers
-  const uniqueInviteUrl = `${baseUrl}/?utm_source=whatsapp&utm_medium=${targetType}&school=${encodedSchool}&grade=${encodedGrade}&ref=${encodedRecipient}`;
+  // Unique invite URL with UTM parameters, unique invite ID, and school/mentor refs
+  const uniqueInviteUrl = `${baseUrl}/?utm_source=whatsapp&utm_medium=${targetType}&invite_id=${uniqueInviteId}&school=${encodedSchool}&grade=${encodedGrade}&ref=${encodedRecipient}`;
 
   const generateMessage = () => {
     switch (targetType) {

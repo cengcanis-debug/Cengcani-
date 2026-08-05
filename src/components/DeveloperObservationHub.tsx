@@ -66,6 +66,33 @@ export function DeveloperObservationHub() {
   const [replyText, setReplyText] = useState<{ [key: string]: string }>({});
   const [activeReplyId, setActiveReplyId] = useState<string | null>(null);
 
+  const handleSyncIncomingBugs = () => {
+    try {
+      const errorLogs = JSON.parse(localStorage.getItem('sifiso_error_logs') || '[]');
+      const newItems: FeedbackItem[] = errorLogs.map((log: any) => ({
+        id: `err-sync-${log.id}`,
+        testerName: 'Automated Runtime Error Monitor',
+        testerRole: 'Tester' as const,
+        category: 'Bug Report' as const,
+        message: `[${log.category}] ${log.message} - ${log.details || ''}`,
+        rating: 1,
+        timestamp: log.timestamp,
+        status: 'Pending' as const
+      })).filter((newItem: FeedbackItem) => !feedbackList.some(f => f.message.includes(newItem.message.substring(0, 30)) || f.id === newItem.id));
+
+      if (newItems.length > 0) {
+        setFeedbackList(prev => [...newItems, ...prev]);
+        addLog('success', 'BugSync', `Successfully synced ${newItems.length} runtime error(s) into Developer Observation Hub.`);
+        alert(`Successfully synced ${newItems.length} new bug report(s) directly to the Developer Hub! Communication line active.`);
+      } else {
+        alert('Communication line active: All recent runtime error logs and bug reports are already synchronized to the Developer Hub.');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Error syncing bug reports.');
+    }
+  };
+
   // New feedback submission modal state for testers
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
   const [newTesterName, setNewTesterName] = useState('');
@@ -233,7 +260,15 @@ export function DeveloperObservationHub() {
               Monitor incoming tester queries, bug reports, and non-sensitive system diagnostics in real time. Handle responses, triage issues, and troubleshoot session-related concerns.
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
+            <button
+              onClick={handleSyncIncomingBugs}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-3 rounded-2xl shadow-md transition flex items-center gap-2 shrink-0 cursor-pointer text-xs sm:text-sm"
+              title="Sync all incoming bug reports and runtime error logs instantly"
+            >
+              <RefreshCw size={16} />
+              <span>Sync Incoming Bugs & Comms</span>
+            </button>
             <button
               onClick={() => setIsSubmitModalOpen(true)}
               className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-5 py-3 rounded-2xl shadow-md transition flex items-center gap-2 shrink-0 cursor-pointer text-xs sm:text-sm"

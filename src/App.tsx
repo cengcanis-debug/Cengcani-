@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MessageSquare, Puzzle, Award, Compass, Sparkles, GraduationCap, BookOpen, Layers, Calendar, Calculator, BookMarked, Users, HeartPulse, Briefcase, ChevronDown, ShieldCheck, Scale, Smartphone, Megaphone, Zap, WifiOff } from 'lucide-react';
 import { ActiveTab, Message } from './types';
 import { ChatView } from './components/ChatView';
@@ -67,6 +67,7 @@ export default function App() {
   const [isWhatsAppModalOpen, setIsWhatsAppModalOpen] = useState<boolean>(false);
   const [isServerUnreachable, setIsServerUnreachable] = useState<boolean>(false);
   const [isRecoveryModalOpen, setIsRecoveryModalOpen] = useState<boolean>(false);
+  const [inviteNotification, setInviteNotification] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'model',
@@ -74,6 +75,28 @@ export default function App() {
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
   ]);
+
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const inviteId = params.get('invite_id');
+      const school = params.get('school');
+      const ref = params.get('ref');
+      const gradeParam = params.get('grade');
+
+      if (inviteId || ref || school) {
+        const inviteData = { inviteId, school, ref, grade: gradeParam, timestamp: new Date().toISOString() };
+        localStorage.setItem('sifiso_whatsapp_invite', JSON.stringify(inviteData));
+        if (gradeParam) {
+          const gMatch = gradeParam.match(/\d+/);
+          if (gMatch) setGrade(gMatch[0]);
+        }
+        setInviteNotification(`🎉 Successfully registered via WhatsApp! Invited by ${ref || 'Mentor'} (${school || 'Sifiso Partner School'}). Grade & curriculum pre-configured instantly without email passwords!`);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }, []);
 
   const handleRetryConnection = async (): Promise<boolean> => {
     try {
@@ -134,6 +157,19 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans">
+      {inviteNotification && (
+        <div className="bg-emerald-600 text-white px-4 py-2.5 text-xs sm:text-sm font-bold flex items-center justify-between shadow-md z-40">
+          <div className="max-w-7xl mx-auto flex items-center gap-2 flex-1">
+            <span>{inviteNotification}</span>
+          </div>
+          <button
+            onClick={() => setInviteNotification(null)}
+            className="text-white/80 hover:text-white bg-white/10 hover:bg-white/20 px-2.5 py-1 rounded-lg text-xs transition cursor-pointer shrink-0"
+          >
+            Dismiss ✕
+          </button>
+        </div>
+      )}
       {/* Top Header */}
       <header className="bg-white border-b border-emerald-100 sticky top-0 z-30 shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
